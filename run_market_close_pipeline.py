@@ -38,10 +38,17 @@ def main():
     now_ny = datetime.now(tz=NY)
     today = now_ny.date()
 
-    # 1) Must be a trading session
-    if not is_trading_session_day(today):
+    force = os.getenv("FORCE_RUN", "").strip() == "1"
+
+    # 1) Must be a trading session (unless forced)
+    if not force and not is_trading_session_day(today):
         print(f"[SKIP] {today} is not a trading session day.")
+        print("       Set FORCE_RUN=1 to bypass this check (useful for manual tests).")
         return
+    
+    if force and not is_trading_session_day(today):
+        print(f"[FORCE] Bypassing trading-session check. today_ny={today}")
+
 
     # 2) Must be in close window (unless forced)
     force = os.getenv("FORCE_RUN", "").strip() == "1"
