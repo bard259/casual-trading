@@ -1,0 +1,6 @@
+python-dotenv
+pytz
+exchange-calendars
+supabase
+pandas
+yfinance
