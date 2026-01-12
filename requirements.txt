@@ -5,3 +5,4 @@ supabase
 pandas
 yfinance
 openai
+exchange-calendars>=4.6
