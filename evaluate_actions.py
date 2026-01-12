@@ -211,7 +211,7 @@ def fetch_actions_needing_evals(limit: int = 200) -> List[ActionRow]:
     # Adjust ordering/filters to your schema. If you have entry_time column, use it.
     resp = (
         supabase.table(ACTIONS_TABLE)
-        .select("id,ticker,action,entry_time,created_at")
+        .select("id,ticker,decision,entry_time,created_at")
         .order("created_at", desc=True)
         .limit(limit)
         .execute()
@@ -226,7 +226,7 @@ def fetch_actions_needing_evals(limit: int = 200) -> List[ActionRow]:
             ActionRow(
                 id=str(r["id"]),
                 ticker=str(r["ticker"]).upper(),
-                action=str(r.get("action") or r.get("side") or "hold").lower(),
+                action=str(r.get("decision") or r.get("side") or "hold").lower(),
                 entry_time=parse_dt(entry_raw),
             )
         )
