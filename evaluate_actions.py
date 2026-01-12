@@ -72,38 +72,47 @@ def next_trading_session_close(dt_utc: datetime) -> datetime:
     If dt is during open market hours, return that session close.
     If dt is outside market hours/weekend/holiday, return next session close.
     Returned as timezone-aware UTC datetime.
+
+    Compatible with older exchange_calendars versions (no next_session_label).
     """
     dt_utc = dt_utc.astimezone(UTC)
     dt_ny = dt_utc.astimezone(NY)
 
-    # Build a session window
     start = (dt_ny.date() - timedelta(days=10)).isoformat()
     end = (dt_ny.date() + timedelta(days=30)).isoformat()
-    sessions = CAL.sessions_in_range(start, end)
+    sessions = list(CAL.sessions_in_range(start, end))
+    if not sessions:
+        raise RuntimeError("No sessions returned from calendar.")
 
-    # Find first session label with date >= dt date
-    session_label = None
-    for s in sessions:
+    # Find first session with date >= dt date
+    idx = None
+    for i, s in enumerate(sessions):
         if s.date() >= dt_ny.date():
-            session_label = s
+            idx = i
             break
-    if session_label is None:
-        session_label = sessions[-1]
+    if idx is None:
+        idx = len(sessions) - 1
 
+    session_label = sessions[idx]
     open_utc = CAL.session_open(session_label)
     close_utc = CAL.session_close(session_label)
 
-    if open_utc <= pd.Timestamp(dt_utc) <= close_utc:
+    dt_ts = pd.Timestamp(dt_utc)
+
+    # If within session hours -> same day close
+    if open_utc <= dt_ts <= close_utc:
         return close_utc.to_pydatetime().replace(tzinfo=UTC)
 
-    # outside current session => next session close
-    # If dt is before open on a session day, use that session close.
-    if dt_ny.date() == session_label.date() and pd.Timestamp(dt_utc) < open_utc:
+    # If before open on a session day -> use that day's close
+    if dt_ny.date() == session_label.date() and dt_ts < open_utc:
         return close_utc.to_pydatetime().replace(tzinfo=UTC)
 
-    next_label = CAL.next_session_label(session_label)
+    # Otherwise -> next session close
+    next_idx = min(idx + 1, len(sessions) - 1)
+    next_label = sessions[next_idx]
     next_close_utc = CAL.session_close(next_label)
     return next_close_utc.to_pydatetime().replace(tzinfo=UTC)
+
 
 
 def add_horizon_then_snap_close(entry_time_utc: datetime, horizon: Literal["1d", "7d"], mode: Literal["calendar", "trading"]) -> datetime:
