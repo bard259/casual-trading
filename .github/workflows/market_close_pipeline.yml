@@ -1,7 +1,12 @@
 name: Market Close Pipeline
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Bypass market-close window (for testing)"
+        required: false
+        default: "0"
   schedule:
     # GitHub cron is UTC only and does not handle DST automatically.
     # We run both possible UTC times and the guard script decides whether to actually run.
@@ -36,5 +41,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FORCE_RUN: ${{ github.event.inputs.force_run || '0' }}
         run: |
           python run_market_close_pipeline.py
