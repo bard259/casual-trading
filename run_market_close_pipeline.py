@@ -43,10 +43,16 @@ def main():
         print(f"[SKIP] {today} is not a trading session day.")
         return
 
-    # 2) Must be in close window
-    if not in_market_close_window(now_ny):
+    # 2) Must be in close window (unless forced)
+    force = os.getenv("FORCE_RUN", "").strip() == "1"
+    if not force and not in_market_close_window(now_ny):
         print(f"[SKIP] Not in market-close window. now_ny={now_ny.isoformat()}")
+        print("       Set FORCE_RUN=1 to bypass this check (useful for manual tests).")
         return
+    
+    if force:
+        print(f"[FORCE] Bypassing close-window check. now_ny={now_ny.isoformat()}")
+
 
     # 3) Run your pipeline
     # Generate actions at/after close
