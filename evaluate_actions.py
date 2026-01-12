@@ -340,11 +340,9 @@ def main():
                 "entry_price": entry_px,
                 "exit_price": exit_px,
                 "return": ret,
-                # Optional debug fields
-                "entry_date": entry_date.isoformat(),
-                "exit_date": exit_date.isoformat(),
                 "created_at": datetime.now(tz=UTC).isoformat(),
             }
+
 
             try:
                 upsert_eval(payload)
