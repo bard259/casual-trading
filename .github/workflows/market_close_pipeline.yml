@@ -1,0 +1,40 @@
+name: Market Close Pipeline
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # GitHub cron is UTC only and does not handle DST automatically.
+    # We run both possible UTC times and the guard script decides whether to actually run.
+    - cron: "5 20 * * 1-5"
+    - cron: "5 21 * * 1-5"
+
+concurrency:
+  group: market-close-pipeline
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run market-close pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python run_market_close_pipeline.py
