@@ -4,3 +4,4 @@ exchange-calendars
 supabase
 pandas
 yfinance
+openai
